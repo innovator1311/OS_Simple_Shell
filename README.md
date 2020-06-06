@@ -14,5 +14,5 @@ make
 ```
 * Start Custom Shell:
 ```
-./code
+./simple-shell
 ```

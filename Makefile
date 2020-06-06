@@ -1,2 +1,2 @@
 make:
-	gcc code.c -o code
+	gcc simple-shell.c -o simple-shell
