@@ -2,8 +2,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <sys/wait.h>
-
-/* pipe4.c */
 #include <stdlib.h>
 #include <fcntl.h>
 
@@ -34,7 +32,7 @@ int main(void) {
 
     while(should_run) {
         
-        printf("ssh>");
+        printf("ssh> ");
         fflush(stdout);
         //fflush(stdin);
 
@@ -70,21 +68,25 @@ int main(void) {
         }
 
 
-        if (strcmp(args[0], "exit") == 0) {
+        if (strcmp(args[0], "exit") == 0) { // exit the shell
             should_run = 0;
             break;
         }
 
-        if (strcmp(args[size - 1], "&") == 0) {
+        if (strcmp(args[size - 1], "&") == 0) { // check if wait for child process
             nwait = 1;
             args[size - 1] = NULL;
             size--;
         }
 
         int isPipe = 0;
-        for (int k = 0; k < size; k++) if (strcmp(args[k],"|") == 0) isPipe = 1; // check of pipe is availabel
+        for (int k = 0; k < size; k++) 
+            if (strcmp(args[k],"|") == 0) { // check of pipe is availabel
+                isPipe = 1; 
+                break;
+            }
 
-        if (isPipe) {
+        if (isPipe) { // pipe case
 
             char *agrs1[MAX_LENGTH/2 + 1]; for(int k = 0; k < MAX_LENGTH/2 + 1; k++) agrs1[k]='\0';
             char *agrs2[MAX_LENGTH/2 + 1]; for(int k = 0; k < MAX_LENGTH/2 + 1; k++) agrs2[k]='\0';
@@ -108,7 +110,7 @@ int main(void) {
             if (pid1==0) {
                 /* Set the process output to the input of the pipe. */
                 close(1);
-                dup(fd[1]);
+                dup2(fd[1], STDOUT_FILENO);
                 close(fd[0]);
                 close(fd[1]);
                 
@@ -122,7 +124,7 @@ int main(void) {
             if (pid2==0) {
                 /* Set the process input to the output of the pipe. */
                 close(0);
-                dup(fd[0]);
+                dup2(fd[0], STDIN_FILENO);
                 close(fd[0]);
                 close(fd[1]);
                 
@@ -132,18 +134,18 @@ int main(void) {
 
             close(fd[0]);
             close(fd[1]);
-            /* Wait for the children to finish, then exit. */
+            
 
-            if (nwait == 0) {
+            if (nwait == 0) { // Wait for the children to finish
                 waitpid(pid1,NULL,0);
                 waitpid(pid2,NULL,0);
             }
-            else {
+            else { // not wait and sleep about 1 second
                 sleep(1);
             }
-            //printf("************* Father exitting... *************\n");
+
         }
-        else {
+        else { // solve no pipe case
             pid_t id = fork();
 
             if (id == 0) {
@@ -165,13 +167,13 @@ int main(void) {
                     if (change) args[k]=args[k + 1];
                 }
 
-                 if (in) {
+                 if (in) { // if exit "<"
                     int fd0 = open(args[1], O_RDONLY, 0);
                     dup2(fd0, STDIN_FILENO);
                     close(fd0);
                 }
                 
-                if (out) {
+                if (out) { // if exit ">"
                     int fd1 = creat(args[1] , 0644) ;
                     dup2(fd1, STDOUT_FILENO);
                     close(fd1);
@@ -181,11 +183,11 @@ int main(void) {
                 return -1;
             }
             else {
-                if (nwait) {
+                if (nwait) { // not wait and sleep about 1 second
                     //printf("Did not wait\n");
                     sleep(1);
                 }
-                else {
+                else { // Wait for the children to finish 
                     while(wait(NULL) != id);
                 }
             }
