@@ -39,7 +39,7 @@ int main(void) {
         for(int i = 0; i < MAX_LENGTH/2 + 1; i++) args[i]='\0'; // clearn commands
 
         char command[80], dummy[80];
-        fgets(command, 80, stdin);
+        fgets(command, 80, stdin); // get command input from user
         
         strtok(command,"\n");
         strcpy(dummy,command);
@@ -104,11 +104,11 @@ int main(void) {
             pid_t pid1, pid2;
             pipe(fd);
 
-            /* Create the first child and run the first command. */
+            // create the first child and run the first command
             pid1 = fork();
             
             if (pid1==0) {
-                /* Set the process output to the input of the pipe. */
+                // set the process output to the input of the pipe
                 close(1);
                 dup2(fd[1], STDOUT_FILENO);
                 close(fd[0]);
@@ -118,11 +118,11 @@ int main(void) {
                 return -1;
             }
 
-            /* Create the second child and run the second command. */
+            // create the second child and run the second command
             pid2 = fork();
            
             if (pid2==0) {
-                /* Set the process input to the output of the pipe. */
+                // set the process input to the output of the pipe
                 close(0);
                 dup2(fd[0], STDIN_FILENO);
                 close(fd[0]);
@@ -135,7 +135,6 @@ int main(void) {
             close(fd[0]);
             close(fd[1]);
             
-
             if (nwait == 0) { // Wait for the children to finish
                 waitpid(pid1,NULL,0);
                 waitpid(pid2,NULL,0);
@@ -154,20 +153,14 @@ int main(void) {
 
                 for(int k=0;args[k]!='\0';k++) {
 
-                    if(strcmp(args[k],"<")==0) {
-                        in=1;
-                        change = 1;
-                    }
+                    if(strcmp(args[k],"<")==0) { in=1; change = 1; }
 
-                    if(strcmp(args[k],">")==0) {
-                        out=1;
-                        change = 1;
-                    }
+                    if(strcmp(args[k],">")==0) { out=1; change = 1; }
 
                     if (change) args[k]=args[k + 1];
                 }
 
-                 if (in) { // if exit "<"
+                if (in) { // if exit "<"
                     int fd0 = open(args[1], O_RDONLY, 0);
                     dup2(fd0, STDIN_FILENO);
                     close(fd0);
@@ -182,15 +175,14 @@ int main(void) {
                 execvp(args[0],args);
                 return -1;
             }
-            else {
-                if (nwait) { // not wait and sleep about 1 second
-                    //printf("Did not wait\n");
-                    sleep(1);
-                }
-                else { // Wait for the children to finish 
-                    while(wait(NULL) != id);
-                }
+            
+            if (nwait) { // not wait and sleep about 1 second
+                sleep(1);
             }
+            else { // Wait for the children to finish 
+                while(wait(NULL) != id);
+            }
+            
         }
     }
 
